@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 import MyContainer from "../components/MyContainer";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { auth } from "../firebase/firebase.config";
 import { toast } from "react-toastify";
 import { useState } from "react";
@@ -13,9 +13,12 @@ const Signup = () => {
 
     const handleSignup = (e) => {
         e.preventDefault();
+        const displayName = e.target.name?.value;
+        const photoURL = e.target.photo?.value;
         const email = e.target.email?.value;
         const password = e.target.password?.value;
-        console.log("Signup function ", { email, password })
+
+        console.log("Signup function ", { displayName, photoURL, email, password })
 
         const regExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+])[A-Za-z\d@$!%*?&#^()\-_=+]{8,}$/;
 
@@ -27,18 +30,34 @@ const Signup = () => {
 
         createUserWithEmailAndPassword(auth, email, password)
             .then((res) => {
-                console.log(res)
-                toast.success("Signup successful");
+                updateProfile(res.user, {
+                    displayName,
+                    photoURL,
+                }).then(() => {
+                    sendEmailVerification(res.user)
+                        .then((res) => {
+                            console.log(res);
+                            toast.success("Signup Successful. Check your email to active your account.");
+                        })
+                        .catch((e) => {
+                            toast.error(e.message);
+                        })
+
+                })
+                    .catch((e) => {
+                        console.log(e);
+                        toast.error(e.message);
+                    })
             })
             .catch((e) => {
                 console.log(e)
-                if(e.code == "auth/email-already-in-use"){
+                if (e.code == "auth/email-already-in-use") {
                     toast.error("User already exist in database.")
                 }
-                else{
-                     toast.error(e.message);
+                else {
+                    toast.error(e.message);
                 }
-                
+
             })
     }
 
@@ -73,7 +92,7 @@ const Signup = () => {
                                 <input
                                     type="text"
                                     name="name"
-                                    placeholder="Habib utsho"
+                                    placeholder="Your name"
                                     className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400"
                                 />
                             </div>
@@ -108,7 +127,7 @@ const Signup = () => {
                                     className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400"
                                 />
                                 <span onClick={() => setShow(!show)} className="absolute right-[8px] top-[36px] cursor-pointer z-50">
-                                 {show ?<FaEye></FaEye> : <IoEyeOff></IoEyeOff>}   
+                                    {show ? <FaEye></FaEye> : <IoEyeOff></IoEyeOff>}
                                 </span>
 
                             </div>

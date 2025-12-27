@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router";
 import MyContainer from "../components/MyContainer";
 import { FaEye } from "react-icons/fa";
@@ -6,14 +6,16 @@ import { IoEyeOff } from "react-icons/io5";
 import { auth } from "../firebase/firebase.config";
 import { signInWithEmailAndPassword } from "firebase/auth/cordova";
 import { toast } from "react-toastify";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithPopup, signOut } from "firebase/auth";
 
 
 const googleprovider = new GoogleAuthProvider();
+const githubprovider = new GithubAuthProvider();
 
 const Signin = () => {
     const [user, setUser] = useState(null);
     const [show, setShow] = useState(false);
+    const emailRef = useRef(null);
 
     const handleSignin = (e) => {
         e.preventDefault();
@@ -24,6 +26,10 @@ const Signin = () => {
         signInWithEmailAndPassword(auth, email, password)
         .then((res) => {
             console.log(res);
+            if(!res.user?.emailVerified){
+                toast.error("Your email is not verified");
+                return;
+            }
             setUser(res.user);
             toast.success("Signin Successful");
         })
@@ -57,6 +63,30 @@ const Signin = () => {
             toast.error(e.message);
         });
     };
+
+    const handleGithubSignin = () => {
+        signInWithPopup(auth, githubprovider)
+        .then((res) => {
+            console.log(res);
+            setUser(res.user);
+            toast.success("Signin Successful");
+        })
+        .catch((e) => {
+            console.log(e);
+            toast.error(e.message);
+        })
+    }
+
+    const handleForgrtPassword = (e) => {
+        console.log()
+        const email = emailRef.current.value;
+        sendPasswordResetEmail(auth, email)
+        .then((res) => {
+            toast.success("Check your email to reset password");;
+        }).catch( e => {
+            toast.error(e.message);
+        })
+    }
 
     return (
         <div className="min-h-[calc(100vh-20px)] flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 relative overflow-hidden">
@@ -100,6 +130,7 @@ const Signin = () => {
                                 <input
                                     type="email"
                                     name="email"
+                                    ref={emailRef}
                                     // value={email}
                                     // onChange={(e) => setEmail(e.target.value)}
                                     placeholder="example@email.com"
@@ -121,6 +152,7 @@ const Signin = () => {
                                 </span>
                             </div>
 
+                            <button className="hover:underline cursor-pointer" onClick={handleForgrtPassword} type="button">Forget password ?</button>
 
                             <button type="submit" className="my-btn">
                                 Login
@@ -150,6 +182,7 @@ const Signin = () => {
                             {/* Github Signin */}
                             {<button
                                 type="button"
+                                onClick={handleGithubSignin}
                                 className="flex items-center justify-center gap-3 bg-white text-gray-800 px-5 py-2 rounded-lg w-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
                             >
                                 <img
