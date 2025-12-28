@@ -1,91 +1,82 @@
-import React, { useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { Link } from "react-router";
 import MyContainer from "../components/MyContainer";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
-import { auth } from "../firebase/firebase.config";
-import { signInWithEmailAndPassword } from "firebase/auth/cordova";
 import { toast } from "react-toastify";
-import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithPopup, signOut } from "firebase/auth";
+import { AuthContext } from "../context/AuthContext";
 
 
-const googleprovider = new GoogleAuthProvider();
-const githubprovider = new GithubAuthProvider();
 
 const Signin = () => {
-    const [user, setUser] = useState(null);
     const [show, setShow] = useState(false);
+    const { signInWithEmailAndPasswordFunc, signInWithEmailFunc, signInWithGithubFunc, sendPassResetEmailFunc, setLoading,setUser } = useContext(AuthContext);
+
     const emailRef = useRef(null);
 
     const handleSignin = (e) => {
         e.preventDefault();
         const email = e.target.email?.value;
         const password = e.target.password?.value;
-        console.log( email, password)
+        console.log(email, password)
 
-        signInWithEmailAndPassword(auth, email, password)
-        .then((res) => {
-            console.log(res);
-            if(!res.user?.emailVerified){
-                toast.error("Your email is not verified");
-                return;
-            }
-            setUser(res.user);
-            toast.success("Signin Successful");
-        })
-        .catch((e) => {
-            console.log(e);
-            toast.error(e.message);
-        })
+        signInWithEmailAndPasswordFunc(email, password)
+            .then((res) => {
+                console.log(res);
+                setLoading(false);
+                if (!res.user?.emailVerified) {
+                    toast.error("Your email is not verified");
+                    return;
+                }
+                setUser(res.user);
+                toast.success("Signin Successful");
+            })
+            .catch((e) => {
+                console.log(e);
+                toast.error(e.message);
+            })
 
     }
 
     const handleGoogleSignin = () => {
-        signInWithPopup(auth, googleprovider)
-        .then((res) => {
-            console.log(res);
-            setUser(res.user);
-            toast.success("Signin Successful");
-        })
-        .catch((e) => {
-            console.log(e);
-            toast.error(e.message);
-        })
+        signInWithEmailFunc()
+            .then((res) => {
+                console.log(res);
+                setLoading(false);
+                setUser(res.user);
+                toast.success("Signin Successful");
+            })
+            .catch((e) => {
+                console.log(e);
+                toast.error(e.message);
+            })
     }
 
-    const handleSignout = () => {
-        signOut(auth)
-        .then(() => {
-            toast.success("Signout Successful");
-            setUser(null);
-        })
-        .catch((e) => {
-            toast.error(e.message);
-        });
-    };
-
     const handleGithubSignin = () => {
-        signInWithPopup(auth, githubprovider)
-        .then((res) => {
-            console.log(res);
-            setUser(res.user);
-            toast.success("Signin Successful");
-        })
-        .catch((e) => {
-            console.log(e);
-            toast.error(e.message);
-        })
+        signInWithGithubFunc()
+            .then((res) => {
+                console.log(res);
+                setLoading(false)
+                setUser(res.user);
+                toast.success("Signin Successful");
+            })
+            .catch((e) => {
+                console.log(e);
+                toast.error(e.message);
+            })
     }
 
     const handleForgrtPassword = (e) => {
-        console.log()
+        console.log(e)
         const email = emailRef.current.value;
-        sendPasswordResetEmail(auth, email)
-        .then((res) => {
-            toast.success("Check your email to reset password");;
-        }).catch( e => {
-            toast.error(e.message);
-        })
+        sendPassResetEmailFunc(email)
+            .then((res) => {
+                console.log(res)
+                setLoading(false)
+                toast.success("Check your email to reset password");;
+            }).catch(e => {
+                toast.error(e.message);
+            })
     }
 
     return (
@@ -111,16 +102,7 @@ const Signin = () => {
 
                     {/* Login card */}
                     <div className="w-full max-w-md backdrop-blur-lg bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-8">
-                        {
-                            user ? (
-                                <div className="text-center space-y-3">
-                                    <img src={user ?.photoURL || "https://via.placeholder.com//88"} className="h-20 w-20 rounded-full mx-auto" alt="" />
-                                    <h2 className="text-xl font-semibold">{user?.displayName}</h2>
-                                    <p className="text-white/80">{user ?.email}</p>
-                                    <button onClick={handleSignout} className="my-btn">Sign Out</button>
-                                </div>
-                            ):(
-                            <form onSubmit={handleSignin} className="space-y-5">
+                        <form onSubmit={handleSignin} className="space-y-5">
                             <h2 className="text-2xl font-semibold mb-2 text-center text-white">
                                 Sign In
                             </h2>
@@ -203,9 +185,7 @@ const Signin = () => {
                                     Sign up
                                 </Link>
                             </p>
-                            </form>
-                            
-                        )}
+                        </form>
                     </div>
                 </div>
             </MyContainer>

@@ -1,15 +1,16 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 import MyContainer from "../components/MyContainer";
-import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
-import { auth } from "../firebase/firebase.config";
 import { toast } from "react-toastify";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 
 const Signup = () => {
     const [show, setShow] = useState(false);
+    const { createUserWithEmailAndPasswordFunc, sendEmailVerificationFunc, updateProfileFunc, setLoading,signoutUserFunc,setUser } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const handleSignup = (e) => {
         e.preventDefault();
@@ -28,22 +29,27 @@ const Signup = () => {
         }
 
 
-        createUserWithEmailAndPassword(auth, email, password)
+        createUserWithEmailAndPasswordFunc(email, password)
             .then((res) => {
-                updateProfile(res.user, {
-                    displayName,
-                    photoURL,
-                }).then(() => {
-                    sendEmailVerification(res.user)
-                        .then((res) => {
-                            console.log(res);
-                            toast.success("Signup Successful. Check your email to active your account.");
-                        })
-                        .catch((e) => {
-                            toast.error(e.message);
-                        })
+                updateProfileFunc(displayName, photoURL,)
+                    .then(() => {
+                        console.log(res)
+                        sendEmailVerificationFunc()
+                            .then((res) => {
+                                console.log(res);
+                                setLoading(false);
+                            })
+                        signoutUserFunc()
+                            .then(() => {
+                               toast.success("Signup Successful. Check your email to active your account.");
+                                setUser(null);
+                                navigate("/signin");
+                            })
+                            .catch((e) => {
+                                toast.error(e.message);
+                            })
 
-                })
+                    })
                     .catch((e) => {
                         console.log(e);
                         toast.error(e.message);
