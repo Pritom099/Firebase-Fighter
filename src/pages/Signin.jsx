@@ -1,5 +1,5 @@
 import React, { useContext, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import MyContainer from "../components/MyContainer";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
@@ -10,7 +10,17 @@ import { AuthContext } from "../context/AuthContext";
 
 const Signin = () => {
     const [show, setShow] = useState(false);
-    const { signInWithEmailAndPasswordFunc, signInWithEmailFunc, signInWithGithubFunc, sendPassResetEmailFunc, setLoading,setUser } = useContext(AuthContext);
+    const { signInWithEmailAndPasswordFunc, signInWithEmailFunc, signInWithGithubFunc, sendPassResetEmailFunc, setLoading,setUser, user} = useContext(AuthContext);
+
+    const location = useLocation();
+    const from = location.state || "/";
+    const navigate = useNavigate();
+    console.log(location);
+
+    if(user){
+        navigate("/");
+        return;
+    }
 
     const emailRef = useRef(null);
 
@@ -30,6 +40,7 @@ const Signin = () => {
                 }
                 setUser(res.user);
                 toast.success("Signin Successful");
+                navigate(from)
             })
             .catch((e) => {
                 console.log(e);
@@ -44,6 +55,7 @@ const Signin = () => {
                 console.log(res);
                 setLoading(false);
                 setUser(res.user);
+                navigate(from)
                 toast.success("Signin Successful");
             })
             .catch((e) => {
@@ -58,6 +70,7 @@ const Signin = () => {
                 console.log(res);
                 setLoading(false)
                 setUser(res.user);
+                navigate(from);
                 toast.success("Signin Successful");
             })
             .catch((e) => {
